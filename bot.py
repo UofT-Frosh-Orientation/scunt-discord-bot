@@ -2,6 +2,25 @@
 # pip install discord
 # pip install -U discord-py-slash-command
 
+#TODO
+#Welcome message
+#Submit command - google drive - please make sure you share - can check permissions with drive api
+#     pass in team name and name
+#Status command - see the status of a challenge, DM
+#View challenges - link to all the challenges, DM
+#View challenges completion - DM
+#Search challenges - DM
+#Login command - set nickname and pronoun
+#DM when judge assigns points or comments or accepts
+
+#Challenges structure
+# Item number (#1)
+# Item Description (Jump into a body of water)
+# Category (The Classics)
+# Points (a number, ie 300)
+# NEW: Completed status?
+# Comment (from judge?)
+
 import discord
 import json
 import backend
