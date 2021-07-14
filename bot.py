@@ -59,7 +59,7 @@ async def on_message(message):
 ])
 async def test(ctx, email):
   if "@" in email:
-    loginResponse = backend.loginUser(email)
+    loginResponse = backend.login_user(email)
     if loginResponse["alreadyIn"]:
       await ctx.send(embed=errorEmbed("You have already logged in and are on team " + loginResponse["team"]))
     embedVar = discord.Embed(title="Thanks for logging in "+loginResponse["fullName"], description="You are on team #" + loginResponse["team"] + " and you now have access to the respective channels.", color=0x00ff00)
