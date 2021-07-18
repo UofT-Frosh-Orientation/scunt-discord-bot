@@ -31,15 +31,13 @@ from discord_slash.utils.manage_commands import create_option, create_choice
 from discord_slash.model import SlashCommandOptionType
 
 with open('keys.json', encoding='utf-8-sig') as k:
-    keys = json.load(k)
+  keys = json.load(k)
+with open('constants.json', encoding='utf-8-sig') as c:
+  constants = json.load(c)
 
 client = discord.Client(intents=discord.Intents.all())
 slash = SlashCommand(client, sync_commands=True)
-
 guildIDs = keys["guildIDs"]
-teamRoles = ["Team 1","Team 2","Team 3","Team 4","Team 5","Team 6","Team 7","Team 8"]
-loggedInRole = "Logged In"
-welcomeChannel = "welcome"
 colors = {
   "purple": 0xb042f5,
   "red": 0xeb402d,
@@ -52,17 +50,8 @@ async def on_ready():
   await changeSplash()
 
 @client.event
-async def on_message(message):
-  if message.content[0:2]=="//":
-    # await message.channel.send()
-    await message.delete()
-    embedVar = discord.Embed(title="Welcome to the Scunt Discord " + "!", description="", color=colors["purple"])
-    embedVar.add_field(name="Please use the /login <email>", value="(same email as registration)", inline=False)
-    await message.channel.send(embed=embedVar)
-
-@client.event
 async def on_member_join(member):
-  channel = discord.utils.get(member.guild.channels, name="welcome")
+  channel = discord.utils.get(member.guild.channels, name=constants["welcomeChannel"])
   embedVar = discord.Embed(title="Welcome to the Scunt Discord " + member.display_name + "!", description="", color=colors["purple"])
   embedVar.add_field(name="Please use the /login <email>", value="(same email as registration)", inline=False)
   await channel.send(embed=embedVar)
@@ -85,9 +74,9 @@ async def test(ctx, email):
       await ctx.send(embed=errorEmbed("You have already logged in and are on team " + str(loginResponse["team"])))
     else:
       try:
-        await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=teamRoles[int(loginResponse["team"])-1]))
+        await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["teamRoles"][int(loginResponse["team"])-1]))
         await ctx.author.edit(nick=(loginResponse["fullName"]+" ("+loginResponse["pronoun"]+")")[0:31])
-        await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=loggedInRole))
+        await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["loggedInRole"]))
       except Exception as e:
         await ctx.send(embed=errorEmbed(str(e)))
       else:
