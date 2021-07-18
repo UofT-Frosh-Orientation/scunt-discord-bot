@@ -33,11 +33,11 @@
 ### Setting up the Scunt Discord - Roles and Permissions
   * Add the following roles to the discord channel
     
-    > Add: ```Team 1```, ```Team 2```, ```Team 3```, ```Team 4```, ```Team 5```, ```Team 6```, ```Team 7```, ```Team 8``` roles - As defined under ```teamRoles``` in the code source
+    > Add: ```Team 1```, ```Team 2```, ```Team 3```, ```Team 4```, ```Team 5```, ```Team 6```, ```Team 7```, ```Team 8``` roles - As defined under ```teamRoles``` in ```constants.json```
 
-    > Add: ```Logged In``` role - As defined under the ```loggedInRole``` in the code source
+    > Add: ```Logged In``` role - As defined under the ```loggedInRole``` in ```constants.json```
 
-    > Create a ```#welcome``` text channel 
+    > Create a ```#welcome``` text channel - As defined under the ```welcomeChannel``` in ```constants.json```
 
     All invites to the Scunt server should redirect to this text channel
 
@@ -51,8 +51,11 @@
 
 ### Commands
   * ```/login <email>``` - Adds a user to the respective team roles within the server, sets the ```Logged In``` role, and sets nickname to preferred name and appends pronouns
-  * ```/submit <number>``` - Submits a link to the judges (This link can refer back to a discord upload or a user submitted Google Drive, Dropbox, etc.). User needs to reference the challenge number, and users info gets pushed along to judges as well (name, team, discord user etc.)
+  * ```/submit <number>``` - Submits via discord to the judges. The next message the user sends should be an attachment, and the bot will push this to the judges. If the user does not send another message within the timeout (30 seconds), an error message will be sent. User needs to reference the challenge number, and users info gets pushed along to judges as well (name, team, discord user etc.)
+  * ```/submit <number> <link>``` - Submits a challenge to the judges with a link (This link can be user submitted via Google Drive, Dropbox, etc.). User needs to reference the challenge number, and users info gets pushed along to judges as well (name, team, discord user etc.)
   * ```/status <number>``` - Retrieves and displays the status of a challenge. Can be submitted, not submitted, pending, or completed. When completed, judges comments, points earned etc. will return.
+  * ```/help``` - DMs the user with commands the bot can do
+  * ```/view``` - DMs the user with the list of challenges, or provides a link to the website/pdf (supplied in ```consatnts.json```)
 
 ### Backend functionality
   * Accesses the registration database to retrieve information on a user after login to the discord. Retrieves users name, pronouns, Scunt team, etc.
