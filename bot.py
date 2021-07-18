@@ -21,8 +21,6 @@
 # NEW: Completed status?
 # Comment (from judge?)
 
-#welcome channel should have permissions - send messages to false for logged in role
-
 import discord
 import json
 import backend
@@ -56,18 +54,18 @@ async def on_member_join(member):
   embedVar.add_field(name="Please use the /login <email>", value="(same email as registration)", inline=False)
   await channel.send(embed=embedVar)
 
+
 @slash.slash(name="login", guild_ids=guildIDs, description="Used to get access to your Scunt team. Use the same email as registration.", options = [
-   create_option(
+  create_option(
     name="email",
     description="Use your registration email for F!rosh week",
     option_type=SlashCommandOptionType.STRING,
     required=True
   ),
 ])
-
 #todo - send error if email was entered and not in database
 #todo - backend can send fullName field or preferred name if not empty
-async def test(ctx, email):
+async def login(ctx, email):
   if "@" in email:
     loginResponse = backend.loginUser(email)
     if loginResponse["alreadyIn"]:
@@ -84,6 +82,57 @@ async def test(ctx, email):
         await ctx.send(embed=embedVar)
   else:
     await ctx.send(embed=errorEmbed("Please enter a valid email and try again. Use the same email as you used to register."))
+
+@slash.slash(name="submit", guild_ids=guildIDs, description="Submit a challenge via discord attachments.", options = [
+  create_option(
+    name="challenge",
+    description="The challenge ID",
+    option_type=SlashCommandOptionType.INTEGER,
+    required=True
+  ),
+])
+async def submit(ctx, challenge):
+  def check(message):
+    if ctx.author.id == message.author.id:
+      return True
+    else:
+      return False
+  embedVar = discord.Embed(title="Please upload your image/videa via discord. The Bot is waiting for you...", color=colors["green"])
+  await ctx.send(embed=embedVar)
+  try: 
+    msg = await client.wait_for('message', check=check, timeout=30)
+    if msg.attachments:
+      await ctx.send(msg.attachments[0].url)
+    else:
+      await ctx.send(embed=errorEmbed("Please upload an attachment via discord or use the /submitlink command."))
+  except:
+    await ctx.send(embed=errorEmbed("Timed out, please run the command and try again."))
+
+@slash.slash(name="submitlink", guild_ids=guildIDs, description="Submit a challenge via discord attachments.", options = [
+  create_option(
+    name="challenge",
+    description="The challenge ID",
+    option_type=SlashCommandOptionType.INTEGER,
+    required=True
+  ),
+  create_option(
+    name="link",
+    description="Link to the challenge submission",
+    option_type=SlashCommandOptionType.STRING,
+    required=True
+  ),
+])
+async def submitlink(ctx, challenge, link):
+  await ctx.send(embed=errorEmbed("Not yet implemented."))
+
+@slash.slash(name="help", guild_ids=guildIDs, description="See all the commands available.")
+async def help(ctx):
+  await ctx.send(embed=errorEmbed("Not yet implemented."))
+
+@slash.slash(name="list", guild_ids=guildIDs, description="See all the challenges available.")
+async def help(ctx):
+  await ctx.send(embed=errorEmbed("Not yet implemented."))
+
 
 async def changeSplash():
   await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="out for you"))
