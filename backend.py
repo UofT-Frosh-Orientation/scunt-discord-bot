@@ -1,7 +1,7 @@
 def loginUser(email):
   #login successful, generate team (based on discipline similar to how frosh groups are generated?)
   if True:
-    return {"fullName":"James Kokoska", "team":"1", "alreadyIn":False, "pronoun":"He/Him"}
+    return {"fullName":"Really Long Nickname Test Will It Still Work????????", "team":"1", "alreadyIn":False, "pronoun":"He/Him"}
   else:
   #login unsuccessful (user already logged in to discord, return team number)
     return {"team":"2", "alreadyIn":True}

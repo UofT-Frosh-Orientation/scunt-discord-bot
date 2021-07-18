@@ -21,6 +21,8 @@
 # NEW: Completed status?
 # Comment (from judge?)
 
+#welcome channel should have permissions - send messages to false for logged in role
+
 import discord
 import json
 import backend
@@ -33,7 +35,16 @@ with open('keys.json', encoding='utf-8-sig') as k:
 
 client = discord.Client(intents=discord.Intents.all())
 slash = SlashCommand(client, sync_commands=True)
+
 guildIDs = keys["guildIDs"]
+teamRoles = ["Team 1","Team 2","Team 3","Team 4","Team 5","Team 6","Team 7","Team 8"]
+loggedInRole = "Logged In"
+welcomeChannel = "welcome"
+colors = {
+  "purple": 0xb042f5,
+  "red": 0xeb402d,
+  "green": 0x00ff00
+}
 
 @client.event
 async def on_ready():
@@ -45,11 +56,18 @@ async def on_message(message):
   if message.content[0:2]=="//":
     # await message.channel.send()
     await message.delete()
-    embedVar = discord.Embed(title="Welcome to the Scunt Discord!", description="Please use the login command", color=0x00ff00)
-    embedVar.add_field(name="//login <email>", value=message.content[2:], inline=False)
+    embedVar = discord.Embed(title="Welcome to the Scunt Discord " + "!", description="", color=colors["purple"])
+    embedVar.add_field(name="Please use the /login <email>", value="(same email as registration)", inline=False)
     await message.channel.send(embed=embedVar)
 
-@slash.slash(name="login", guild_ids=guildIDs, description="This is just a test command, nothing more.", options = [
+@client.event
+async def on_member_join(member):
+  channel = discord.utils.get(member.guild.channels, name="welcome")
+  embedVar = discord.Embed(title="Welcome to the Scunt Discord " + member.display_name + "!", description="", color=colors["purple"])
+  embedVar.add_field(name="Please use the /login <email>", value="(same email as registration)", inline=False)
+  await channel.send(embed=embedVar)
+
+@slash.slash(name="login", guild_ids=guildIDs, description="Used to get access to your Scunt team. Use the same email as registration.", options = [
    create_option(
     name="email",
     description="Use your registration email for F!rosh week",
@@ -57,21 +75,32 @@ async def on_message(message):
     required=True
   ),
 ])
+
+#todo - send error if email was entered and not in database
+#todo - backend can send fullName field or preferred name if not empty
 async def test(ctx, email):
   if "@" in email:
     loginResponse = backend.loginUser(email)
     if loginResponse["alreadyIn"]:
-      await ctx.send(embed=errorEmbed("You have already logged in and are on team " + loginResponse["team"]))
-    embedVar = discord.Embed(title="Thanks for logging in "+loginResponse["fullName"], description="You are on team #" + loginResponse["team"] + " and you now have access to the respective channels.", color=0x00ff00)
-    await ctx.send(embed=embedVar)
+      await ctx.send(embed=errorEmbed("You have already logged in and are on team " + str(loginResponse["team"])))
+    else:
+      try:
+        await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=teamRoles[int(loginResponse["team"])-1]))
+        await ctx.author.edit(nick=(loginResponse["fullName"]+" ("+loginResponse["pronoun"]+")")[0:31])
+        await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=loggedInRole))
+      except Exception as e:
+        await ctx.send(embed=errorEmbed(str(e)))
+      else:
+        embedVar = discord.Embed(title="Login successful, "+loginResponse["fullName"], description="You are on team #" + str(loginResponse["team"]) + " and you now have access to the respective channels.", color=colors["green"])
+        await ctx.send(embed=embedVar)
   else:
-    await ctx.send(embed=errorEmbed("Please enter a valid email and try again."))
+    await ctx.send(embed=errorEmbed("Please enter a valid email and try again. Use the same email as you used to register."))
 
 async def changeSplash():
   await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="out for you"))
 
 def errorEmbed(errorDescription):
-  return discord.Embed(title="Error", description=errorDescription, color=0xeb402d)
+  return discord.Embed(title="Error", description=errorDescription, color=colors["red"])
 
 
 client.run(keys["clientToken"])
