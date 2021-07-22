@@ -21,6 +21,14 @@
 # NEW: Completed status?
 # Comment (from judge?)
 
+
+
+
+
+#TODO
+#new users shouldn't be able to submit - must have logged in role
+#see team points list
+
 import discord
 import json
 import backend
@@ -39,7 +47,8 @@ guildIDs = keys["guildIDs"]
 colors = {
   "purple": 0xb042f5,
   "red": 0xeb402d,
-  "green": 0x00ff00
+  "green": 0x00ff00,
+  "yellow": 0xfcd703
 }
 
 @client.event
@@ -50,7 +59,7 @@ async def on_ready():
 @client.event
 async def on_member_join(member):
   channel = discord.utils.get(member.guild.channels, name=constants["welcomeChannel"])
-  embedVar = discord.Embed(title="Welcome to the Scunt Discord " + member.display_name + "!", description="", color=colors["purple"])
+  embedVar = discord.Embed(title="🎉 Welcome to the Scunt Discord " + member.display_name + "!", description="", color=colors["purple"])
   embedVar.add_field(name="Please use the /login <email>", value="(same email as registration)", inline=False)
   await channel.send(embed=embedVar)
 
@@ -73,8 +82,8 @@ async def login(ctx, email):
     else:
       try:
         await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["teamRoles"][int(loginResponse["team"])-1]))
-        await ctx.author.edit(nick=(loginResponse["fullName"]+" ("+loginResponse["pronoun"]+")")[0:31])
         await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["loggedInRole"]))
+        await ctx.author.edit(nick=(loginResponse["fullName"]+" ("+loginResponse["pronoun"]+")")[0:31])
       except Exception as e:
         await ctx.send(embed=errorEmbed(str(e)))
       else:
@@ -97,14 +106,25 @@ async def submit(ctx, challenge):
       return True
     else:
       return False
-  embedVar = discord.Embed(title="Please upload your image/videa via discord. The Bot is waiting for you...", color=colors["green"])
+  embedVar = discord.Embed(title="Please send your image/video via discord now. The bot is waiting for you...", description="Send any text message to cancel.", color=colors["yellow"])
   await ctx.send(embed=embedVar)
   try: 
-    msg = await client.wait_for('message', check=check, timeout=30)
+    msg = await client.wait_for('message', check=check, timeout=60)
     if msg.attachments:
-      await ctx.send(msg.attachments[0].url)
+      team = getTeam(ctx)
+      if(team!=False):
+        embedVar = discord.Embed(title="Sent to the judges!", description=createDescription([
+          {"title": "Challenge", "description":challenge},
+          {"title": "Submission", "description":msg.attachments[0].url},
+          {"title": "Team", "description":team},
+        ]), color=colors["green"])
+        await ctx.send(embed=embedVar)
+        await msg.add_reaction("✅")
+      else:
+        await ctx.send(embed=errorEmbed("You are not on a team! Please use /login"))
+        await msg.add_reaction("🛑")
     else:
-      await ctx.send(embed=errorEmbed("Please upload an attachment via discord or use the /submitlink command."))
+      await ctx.send(embed=errorEmbed("Cancelled. Please upload an attachment via discord next time or use the /submitlink command."))
   except:
     await ctx.send(embed=errorEmbed("Timed out, please run the command and try again."))
 
@@ -123,22 +143,81 @@ async def submit(ctx, challenge):
   ),
 ])
 async def submitlink(ctx, challenge, link):
-  await ctx.send(embed=errorEmbed("Not yet implemented."))
+  team = getTeam(ctx)
+  if(team!=False):
+    embedVar = discord.Embed(title="Sent to the judges!", description=createDescription([
+      {"title": "Challenge", "description":challenge},
+      {"title": "Submission", "description":link},
+      {"title": "Team", "description":team},
+    ]), color=colors["green"])
+    await ctx.send(embed=embedVar)
+  else:
+    await ctx.send(embed=errorEmbed("You are not on a team! Please use /login"))
+
+@slash.slash(name="status", guild_ids=guildIDs, description="View the status of a challenge", options = [
+  create_option(
+    name="challenge",
+    description="The challenge ID",
+    option_type=SlashCommandOptionType.INTEGER,
+    required=True
+  ),
+])
+async def status(ctx, challenge):
+  team = getTeam(ctx)
+  if(team!=False):
+    embedVar = discord.Embed(title="Challenge " + str(challenge), description=createDescription([
+      {"title": "Status", "description":"incomplete"},
+      {"title": "Comments", "description":""},
+      {"title": "Points rewarded", "description":""},
+    ]), color=colors["purple"])
+    await ctx.author.send(embed=embedVar)
+    embedVar = discord.Embed(title="Sent you a DM!", color=colors["purple"])
+    msg = await ctx.send(embed=embedVar)
+    await msg.delete()
+  else:
+    await ctx.send(embed=errorEmbed("You are not on a team! Please use /login"))
 
 @slash.slash(name="help", guild_ids=guildIDs, description="See all the commands available.")
 async def help(ctx):
-  await ctx.send(embed=errorEmbed("Not yet implemented."))
+  embedVar = discord.Embed(title="Available Scunt " + constants["scuntYear"] + " commands", color=colors["purple"])
+  for command in constants["commands"] :
+    embedVar.add_field(name=command["title"],value=command["description"],inline=False)
+  await ctx.author.send(embed=embedVar)
+  embedVar = discord.Embed(title="Sent you a DM!", color=colors["purple"])
+  msg = await ctx.send(embed=embedVar)
+  await msg.delete()
 
-@slash.slash(name="list", guild_ids=guildIDs, description="See all the challenges available.")
-async def help(ctx):
-  await ctx.send(embed=errorEmbed("Not yet implemented."))
+@slash.slash(name="view", guild_ids=guildIDs, description="See all the challenges available.")
+async def view(ctx):
+  embedVar = discord.Embed(title="Scunt " + constants["scuntYear"] + " challenge list", description=constants["challengesLink"],color=colors["purple"])
+  await ctx.author.send(embed=embedVar)
+  embedVar = discord.Embed(title="Sent you a DM!", color=colors["purple"])
+  msg = await ctx.send(embed=embedVar)
+  await msg.delete()
 
 
 async def changeSplash():
-  await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="out for you"))
+  await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="you right now..."))
 
 def errorEmbed(errorDescription):
   return discord.Embed(title="Error", description=errorDescription, color=colors["red"])
 
+def createDescription(fields, newline=False):
+  outputString = ""
+  for field in fields:
+    if(field["description"]=="" or field["description"]==False):
+      continue
+    outputString+="**"+str(field["title"])+":** "
+    if(newline):
+      outputString+="\n"
+    outputString+=str(field["description"])
+    outputString+="\n"
+  return outputString
+
+def getTeam(ctx):
+  for role in ctx.author.roles:
+    if("team" in role.name.lower()):
+      return role.name.lower().replace("team","").replace(" ","")
+  return False
 
 client.run(keys["clientToken"])
