@@ -1,32 +1,63 @@
 # Dependencies
 # pip install discord
 # pip install -U discord-py-slash-command
+# pip install --upgrade Pillow
+
 
 #TODO
-#Welcome message
-#Submit command - google drive - please make sure you share - can check permissions with drive api
-#     pass in team name and name
-#Status command - see the status of a challenge, DM
-#View challenges - link to all the challenges, DM
-#View challenges completion - DM
-#Search challenges - DM
-#Login command - set nickname and pronoun
 #DM when judge assigns points or comments or accepts
 
-#Challenges structure
-# Item number (#1)
-# Item Description (Jump into a body of water)
-# Category (The Classics)
-# Points (a number, ie 300)
-# NEW: Completed status?
-# Comment (from judge?)
+# Backend structure - these functions are not yet called by the frontend
 
+# /status <challenge>
+# View status of a challenge
+# def status(challenge, team)
+# challenge - int
+# team - int
+# return [
+#   {title:"Item description","description":value},
+#   {title:"Category","description":value},
+#   {title:"Points","description":value},
+#   {title:"Completed status","description":value},
+#   {title:"Points rewarded","description":value},
+#   {title:"Judges comments","description":value},
+# ]
+# Put value to False or "" if missing info for status command
 
+# /leaderboard
+# View the leaderboard and points of every team
+# def leaderboard(team)
+# team - int
+# return [100,200,300,400,500,600,700,800]
+# array of points - needs to correspond to team names listed in constants.json - teamRoles (chronological order)
+
+# /submitlink <challenge> <link> or /submit <challenge> (link via discord)
+# Submit a challenge to judges
+# def submit(challenge, team, discordTag, nickname, link)
+# challenge - int
+# team - int
+# discordTag - str
+# nickname - str
+# link - str
+# return True / False (if error)
+
+# /login <email> <code?>
+# Logs a user in, assigns nickname and team roles
+# def login(email, code)
+# email - str
+# code - int
+# if login successful:
+# return {
+#   "fullName" : value,
+#   "team" : value,       #int or str shouldn't matter
+#   "pronoun" : value
+# }
+# if error:
+# return False
 
 
 
 #TODO
-#new users shouldn't be able to submit - must have logged in role
 #see team points list
 
 import discord
@@ -35,6 +66,9 @@ import backend
 from discord_slash import SlashCommand
 from discord_slash.utils.manage_commands import create_option, create_choice
 from discord_slash.model import SlashCommandOptionType
+from PIL import Image, ImageDraw, ImageFont
+import io
+from discord import File
 
 with open('keys.json', encoding='utf-8-sig') as k:
   keys = json.load(k)
@@ -48,7 +82,9 @@ colors = {
   "purple": 0xb042f5,
   "red": 0xeb402d,
   "green": 0x00ff00,
-  "yellow": 0xfcd703
+  "yellow": 0xfcd703,
+  "black": 0x1c1c1c,
+  "white": 0xfcfcfc,
 }
 
 @client.event
@@ -75,20 +111,20 @@ async def on_member_join(member):
 #todo - send error if email was entered and not in database
 #todo - backend can send fullName field or preferred name if not empty
 async def login(ctx, email):
+  if getLogin(ctx) == True:
+    await ctx.send(embed=errorEmbed("You have already logged in and are on team " + getTeam(ctx)))
+    return
   if "@" in email:
     loginResponse = backend.loginUser(email)
-    if loginResponse["alreadyIn"]:
-      await ctx.send(embed=errorEmbed("You have already logged in and are on team " + str(loginResponse["team"])))
+    try:
+      await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["teamRoles"][int(loginResponse["team"])-1]))
+      await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["loggedInRole"]))
+      await ctx.author.edit(nick=(loginResponse["fullName"]+" ("+loginResponse["pronoun"]+")")[0:31])
+    except Exception as e:
+      await ctx.send(embed=errorEmbed(str(e)))
     else:
-      try:
-        await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["teamRoles"][int(loginResponse["team"])-1]))
-        await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["loggedInRole"]))
-        await ctx.author.edit(nick=(loginResponse["fullName"]+" ("+loginResponse["pronoun"]+")")[0:31])
-      except Exception as e:
-        await ctx.send(embed=errorEmbed(str(e)))
-      else:
-        embedVar = discord.Embed(title="Login successful, "+loginResponse["fullName"], description="You are on team #" + str(loginResponse["team"]) + " and you now have access to the respective channels.", color=colors["green"])
-        await ctx.send(embed=embedVar)
+      embedVar = discord.Embed(title="Login successful, "+loginResponse["fullName"], description="You are on team #" + str(loginResponse["team"]) + " and you now have access to the respective channels.", color=colors["green"])
+      await ctx.send(embed=embedVar)
   else:
     await ctx.send(embed=errorEmbed("Please enter a valid email and try again. Use the same email as you used to register."))
 
@@ -148,6 +184,7 @@ async def submitlink(ctx, challenge, link):
     embedVar = discord.Embed(title="Sent to the judges!", description=createDescription([
       {"title": "Challenge", "description":challenge},
       {"title": "Submission", "description":link},
+      {"title": "", "description":"*Please ensure that anyone with this link can view the file!*"},
       {"title": "Team", "description":team},
     ]), color=colors["green"])
     await ctx.send(embed=embedVar)
@@ -195,6 +232,58 @@ async def view(ctx):
   msg = await ctx.send(embed=embedVar)
   await msg.delete()
 
+@slash.slash(name="leaderboard", guild_ids=guildIDs, description="View the current leaderboard standings.")
+async def view(ctx):
+  teamPoints = [150,100,200,300,400,100,200,300]
+  
+  IMAGE_WIDTH = 800
+  heightTeam = 50
+  IMAGE_HEIGHT = len(constants["teamRoles"]) * heightTeam + 90
+  image = Image.new('RGB',(IMAGE_WIDTH, IMAGE_HEIGHT))
+
+  # create object for drawing
+  draw = ImageDraw.Draw(image)
+
+  # white background
+  draw.rectangle([0, 0, IMAGE_WIDTH, IMAGE_HEIGHT], fill=colors["white"])
+
+  # draw title
+  font = ImageFont.truetype('arialRound.ttf', 45)
+  text = "Scunt " + constants["scuntYear"] + " Leaderboard"
+  textWidth, textHeight = draw.textsize(text, font=font)
+  x = (IMAGE_WIDTH - textWidth)//2
+  draw.text((x, 20), text, fill=colors["black"], font=font)
+
+  # draw text and bars
+  minBarWidth = 75
+  maxBarWidth = 500
+  offset = 35
+  teamNumber = 0
+  minValue = min(teamPoints)
+  maxValue = max(teamPoints)
+  range = maxValue - minValue
+  for team in constants["teamRoles"]:
+    font = ImageFont.truetype('arialRound.ttf', 30)
+    textWidth, textHeight = draw.textsize(team, font=font)
+    textWidth = 80
+    offset = offset + heightTeam
+    textPaddingLeft = 20
+    barPaddingLeft = 30
+    teamPointsPercent = (teamPoints[teamNumber]-minValue) / range
+    draw.rounded_rectangle((textWidth + textPaddingLeft + barPaddingLeft, offset + 3, textWidth + textPaddingLeft + barPaddingLeft + (teamPointsPercent*maxBarWidth+minBarWidth), offset + textHeight), fill="purple", radius=7)
+    draw.text((textPaddingLeft, offset), team, fill=(50, 0, 120), font=font)
+
+    font = ImageFont.truetype('arialRound.ttf', 20)
+    textWidthScore, textHeightScore = draw.textsize(str(teamPoints[teamNumber]), font=font)
+    draw.text((textWidth + textPaddingLeft + barPaddingLeft + (teamPointsPercent*maxBarWidth+minBarWidth+10), offset+3), str(teamPoints[teamNumber]), fill=(50, 0, 120), font=font)
+    teamNumber=teamNumber+1
+
+  buffer = io.BytesIO()
+  image.save(buffer, format='PNG')    
+  buffer.seek(0) 
+  await ctx.author.send(file=File(buffer, 'myimage.png'))
+  await ctx.send(content="okay")
+
 
 async def changeSplash():
   await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="you right now..."))
@@ -207,7 +296,8 @@ def createDescription(fields, newline=False):
   for field in fields:
     if(field["description"]=="" or field["description"]==False):
       continue
-    outputString+="**"+str(field["title"])+":** "
+    if(str(field["title"])!=""):
+      outputString+="**"+str(field["title"])+":** "
     if(newline):
       outputString+="\n"
     outputString+=str(field["description"])
@@ -219,5 +309,12 @@ def getTeam(ctx):
     if("team" in role.name.lower()):
       return role.name.lower().replace("team","").replace(" ","")
   return False
+
+def getLogin(ctx):
+  for role in ctx.author.roles:
+    if(constants["loggedInRole"] == role.name):
+      return True
+  return False
+  
 
 client.run(keys["clientToken"])
