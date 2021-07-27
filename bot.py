@@ -6,6 +6,7 @@
 
 #TODO
 #DM when judge assigns points or comments or accepts
+#Error checking on frontend
 
 # Backend structure - these functions are not yet called by the frontend
 
@@ -59,10 +60,7 @@
 # def lookUpTeam(discordUserID)
 # discordTag - str
 # return team  #int or str shouldn't matter
-
-
-#TODO
-#see team points list
+# return False if user hasn't logged in (i.e. they haven't logged in)
 
 import discord
 import json
@@ -207,7 +205,7 @@ async def sendSubmit(ctx, challenge, DM):
   ),
 ])
 async def submitlink(ctx, challenge, link):
-  sendSubmitLink(ctx,challenge,link,False)
+  await sendSubmitLink(ctx,challenge,link,False)
 async def sendSubmitLink(ctx,challenge,link,DM):
   team = getTeam(ctx,DM)
   if(team!=False):
