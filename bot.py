@@ -36,17 +36,16 @@
 # def submit(challenge, team, discordTag, nickname, link)
 # challenge - int
 # team - int
-# discordTag - str
+# discordTag - str (User#0000)
 # nickname - str
 # link - str
 # return True / False (if error)
 
 # /login <email> <code?>
 # Logs a user in, assigns nickname and team roles, store the discord tag in the database (in case we need to look up team name)
-# def login(email, code, discordTag, discordUserID)
+# def login(email, code, discordUserID)
 # email - str
 # code - int
-# discordTag - str (User#0000)
 # discordUserID - int
 # if login successful:
 # return {
@@ -58,7 +57,7 @@
 # return False
 
 # def lookUpTeam(discordUserID)
-# discordTag - str
+# discordUserID - int
 # return team  #int or str shouldn't matter
 # return False if user hasn't logged in (i.e. they haven't logged in)
 
