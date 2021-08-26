@@ -157,10 +157,17 @@ async def login(ctx, email):
     option_type=SlashCommandOptionType.INTEGER,
     required=True
   ),
+  create_option(
+    name="media-consent",
+    description="The challenge ID",
+    option_type=SlashCommandOptionType.STRING,
+    required=True,
+    choices=["Yes","No"]
+  ),
 ])
-async def submit(ctx, challenge):
-  await sendSubmit(ctx, challenge, False)
-async def sendSubmit(ctx, challenge, DM):
+async def submit(ctx, challenge, mediaConsent):
+  await sendSubmit(ctx, challenge, mediaConsent, False)
+async def sendSubmit(ctx, challenge, mediaConsent, DM):
   def check(message):
     if ctx.author.id == message.author.id:
       return True
@@ -173,7 +180,7 @@ async def sendSubmit(ctx, challenge, DM):
     if msg.attachments:
       team = getTeam(ctx, DM)
       if(team!=False):
-        # backend.submit(challenge, team, getDiscordTag(ctx), ctx.author.nickname, msg.attachments[0].url)
+        # backend.submit(challenge, team, getDiscordTag(ctx), ctx.author.nickname, msg.attachments[0].url, mediaConsent)
         embedVar = discord.Embed(title="Sent to the judges!", description=createDescription([
           {"title": "Challenge", "description":challenge},
           {"title": "Submission", "description":msg.attachments[0].url},
@@ -202,13 +209,20 @@ async def sendSubmit(ctx, challenge, DM):
     option_type=SlashCommandOptionType.STRING,
     required=True
   ),
+  create_option(
+    name="media-consent",
+    description="The challenge ID",
+    option_type=SlashCommandOptionType.STRING,
+    required=True,
+    choices=["Yes","No"]
+  ),
 ])
-async def submitlink(ctx, challenge, link):
-  await sendSubmitLink(ctx,challenge,link,False)
-async def sendSubmitLink(ctx,challenge,link,DM):
+async def submitlink(ctx, challenge, link,mediaConsent):
+  await sendSubmitLink(ctx,challenge,link,mediaConsent,False)
+async def sendSubmitLink(ctx,challenge,link,mediaConsent,DM):
   team = getTeam(ctx,DM)
   if(team!=False):
-    # backend.submit(challenge, team, getDiscordTag(ctx), ctx.author.nickname, link)
+    # backend.submit(challenge, team, getDiscordTag(ctx), ctx.author.nickname, link, mediaConsent)
     embedVar = discord.Embed(title="Sent to the judges!", description=createDescription([
       {"title": "Challenge", "description":challenge},
       {"title": "Submission", "description":link},

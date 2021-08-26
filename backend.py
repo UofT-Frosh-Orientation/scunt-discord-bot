@@ -6,7 +6,7 @@ def loginUser(email):
   #login unsuccessful (user already logged in to discord, return team number)
     return {"team":"2", "alreadyIn":True}
 
-def submit(submission, name, discordUser, team):
+def submit(submission, name, discordUser, team, mediaConsent):
   #submission - number, name - the persons name submitting (discord nickname), discordUser - username string of person submitting, team - number
   #return the status of the submission (True if success, False if error), takes a string
   #will be a google drive link or a discord link linking to an attachment
