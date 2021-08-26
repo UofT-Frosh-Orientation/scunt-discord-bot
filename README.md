@@ -53,8 +53,8 @@
 
 ### Commands
   * ```/login <email>``` - Adds a user to the respective team roles within the server, sets the ```Logged In``` role, and sets nickname to preferred name and appends pronouns
-  * ```/submit <number>``` - Submits via discord to the judges. The next message the user sends should be an attachment, and the bot will push this to the judges. If the user does not send another message within the timeout (30 seconds), an error message will be sent. User needs to reference the challenge number, and users info gets pushed along to judges as well (name, team, discord user etc.)
-  * ```/submitlink <number> <link>``` - Submits a challenge to the judges with a link (This link can be user submitted via Google Drive, Dropbox, etc.). User needs to reference the challenge number, and users info gets pushed along to judges as well (name, team, discord user etc.)
+  * ```/submit <number> <media-consent>``` - Submits via discord to the judges. The next message the user sends should be an attachment, and the bot will push this to the judges. If the user does not send another message within the timeout (30 seconds), an error message will be sent. User needs to reference the challenge number, and users info gets pushed along to judges as well (name, team, discord user etc.)
+  * ```/submitlink <number> <link> <media-consent>``` - Submits a challenge to the judges with a link (This link can be user submitted via Google Drive, Dropbox, etc.). User needs to reference the challenge number, and users info gets pushed along to judges as well (name, team, discord user etc.)
   * ```/status <number>``` - Retrieves and displays the status of a challenge. Can be submitted, not submitted, pending, or completed. When completed, judges comments, points earned etc. will return.
   * ```/help``` - DMs the user with commands the bot can do
   * ```/leaderboard``` - DMs the user with the current score of all the teams (in a nice generated image)
