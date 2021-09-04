@@ -117,7 +117,7 @@ async def on_ready():
 async def on_member_join(member):
   channel = discord.utils.get(member.guild.channels, name=constants["welcomeChannel"])
   embedVar = discord.Embed(title="🎉 Welcome to the Scunt Discord " + member.display_name + "!", description="", color=colors["purple"])
-  embedVar.add_field(name="Please use the /login <email>", value="(same email as registration)", inline=False)
+  embedVar.add_field(name="Please use the /login <email> <code>", value="(same email as registration)", inline=False)
   await channel.send(embed=embedVar)
 
 
@@ -321,7 +321,7 @@ async def sendLeaderboard(ctx):
   #teamPoints = [150,100,200,300,400,100,200,300,]
   leaderboardResponse = backend.leaderboard()
   if 'errorMsg' in leaderboardResponse:
-    await sendMessage(ctx, errorEmbed(leaderboardResponse['errorMsg']), DM)
+    await sendMessage(ctx, errorEmbed(leaderboardResponse['errorMsg']), True)
     return
   teamPoints = leaderboardResponse["teamScores"]
   IMAGE_WIDTH = 800
