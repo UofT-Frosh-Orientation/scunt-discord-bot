@@ -9,6 +9,6 @@
     {"title":"/submitlink <challenge> <link> <media consent>", "description":"Submit the challenge number to the judges with the given link."},
     {"title":"/status <challenge>", "description":"DMs the user the status of a certain challenge number"}
   ],
-  "challengesLink" : "https://scunt-2021.herokuapp.com/",
+  "challengesLink" : "https://www.scunt.skule.ca/",
   "scuntYear" : "2T1"
 }

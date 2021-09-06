@@ -1,7 +1,6 @@
 import requests
 
 ROOT = 'https://scunt-2021.herokuapp.com'
-ROOT_LOCAL = 'http://localhost:6969'
 def loginUser(email, code, username, id):
   #login successful, generate team (based on discipline similar to how frosh groups are generated?)
   loginRequest = {
