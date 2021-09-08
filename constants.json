@@ -5,8 +5,8 @@
   "commands": [
     {"title":"/help", "description":"DMs the user with available commands"},
     {"title":"/view", "description":"DMs the user with the list (or a link) of challenges"},
-    {"title":"/submit <challenge> <media consent>", "description":"Submit the challenge number to the judges via discord. The next attachment message you send will be submitted to the judges."},
-    {"title":"/submitlink <challenge> <link> <media consent>", "description":"Submit the challenge number to the judges with the given link."},
+    {"title":"/submit <challenge> <media consent (Yes/No)>", "description":"Submit the challenge number to the judges via discord. The next attachment message you send will be submitted to the judges."},
+    {"title":"/submitlink <challenge> <link> <media consent (Yes/No)>", "description":"Submit the challenge number to the judges with the given link."},
     {"title":"/status <challenge>", "description":"DMs the user the status of a certain challenge number"}
   ],
   "challengesLink" : "https://www.scunt.skule.ca/",

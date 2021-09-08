@@ -62,6 +62,7 @@
 # return False if user hasn't logged in (i.e. they haven't logged in)
 
 import discord
+import sys
 import json
 import backend
 from discord_slash import SlashCommand
@@ -75,6 +76,7 @@ with open('keys.json', encoding='utf-8-sig') as k:
   keys = json.load(k)
 with open('constants.json', encoding='utf-8-sig') as c:
   constants = json.load(c)
+
 
 client = discord.Client(intents=discord.Intents.all())
 slash = SlashCommand(client, sync_commands=True)
@@ -91,21 +93,31 @@ colors = {
 @client.event
 async def on_message(msg):
   command = msg.content.split(" ")
+  print(command)
   try:
-    if(str(msg.channel.type)=="private"):
-      if(command[0]=="help" or command[0]=="/help"):
+    if str(msg.channel.type)=="private":
+      if command[0]=="help" or command[0]=="/help":
         await sendHelp(msg)
-      elif(command[0]=="view" or command[0]=="/view"):
+      elif command[0]=="view" or command[0]=="/view":
         await sendView(msg)
-      elif(command[0]=="leaderboard" or command[0]=="/leaderboard"):
+      elif command[0]=="leaderboard" or command[0]=="/leaderboard":
         await sendLeaderboard(msg)
-      elif(command[0]=="status" or command[0]=="/status"):
+      elif command[0]=="status" or command[0]=="/status":
         await sendStatus(msg, command[1], True)
-      elif(command[0]=="submit" or command[0]=="/submit"):
-        await sendSubmit(msg, command[1], True)
-      elif(command[0]=="submitlink" or command[0]=="/submitlink"):
-        await sendSubmitLink(msg, command[1], command[2], True)
+      elif command[0]=="submit" or command[0]=="/submit":
+        await sendSubmit(msg, command[1], command[2], True)
+        options = ["Yes", "No"]
+        if not command[2] in options:
+          await msg.author.send(embed=errorEmbed(
+            "Please make sure media consent is [Yes] or [No]"))
+      elif command[0]=="submitlink" or command[0]=="/submitlink":
+        await sendSubmitLink(msg, command[1], command[2], command[3], True)
+        options = ["Yes", "No"]
+        if not command[3] in options:
+          await msg.author.send(embed=errorEmbed(
+            "Please make sure media consent is [Yes] or [No]"))
   except:
+    print(sys.exc_info[0])
     await msg.author.send(embed=errorEmbed("There was an error with your command. You most likely forgot a parameter.\nType /help for more information."))
 
 @client.event
@@ -115,10 +127,11 @@ async def on_ready():
 
 @client.event
 async def on_member_join(member):
-  channel = discord.utils.get(member.guild.channels, name=constants["welcomeChannel"])
-  embedVar = discord.Embed(title="🎉 Welcome to the Scunt Discord " + member.display_name + "!", description="", color=colors["purple"])
-  embedVar.add_field(name="Please use the /login <email> <code>", value="(same email as registration)", inline=False)
-  await channel.send(embed=embedVar)
+  if sys.argv[1] == 1:
+    channel = discord.utils.get(member.guild.channels, name=constants["welcomeChannel"])
+    embedVar = discord.Embed(title="🎉 Welcome to the Scunt Discord " + member.display_name + "!", description="", color=colors["purple"])
+    embedVar.add_field(name="Please use the /login <email> <code>", value="(same email as registration)", inline=False)
+    await channel.send(embed=embedVar)
 
 
 @slash.slash(name="login", guild_ids=guildIDs, description="Used to get access to your Scunt team. Use the same email as registration.", options = [
@@ -146,10 +159,18 @@ async def login(ctx, email, code):
     loginResponse = backend.loginUser(email, code, getDiscordTag(ctx), ctx.author.id)
     print(loginResponse)
     if 'errorMsg' in loginResponse:
-      await ctx.send(embed=errorEmbed(loginResponse['errorMsg']))
+      print(loginResponse["errorMsg"])
+      embedVar = discord.Embed(title="Sent you a DM!", color=colors["purple"])
+      msg = await ctx.send(embed=embedVar)
+      await msg.delete()
+      await ctx.author.send(embed=errorEmbed(loginResponse['errorMsg']))
       return
     if loginResponse['alreadyIn']:
-      await ctx.send(embed=errorEmbed("You have already logged in."))
+      print("Already logged in")
+      embedVar = discord.Embed(title="Sent you a DM!", color=colors["purple"])
+      msg = await ctx.send(embed=embedVar)
+      await msg.delete()
+      await ctx.author.send(embed=errorEmbed("You have already logged in."))
       return
     try:
       await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["teamRoles"][int(loginResponse["team"])-1]))
@@ -160,8 +181,14 @@ async def login(ctx, email, code):
     except Exception as e:
       await ctx.send(embed=errorEmbed(str(e)))
     else:
-      embedVar = discord.Embed(title="Login successful, "+loginResponse["fullName"], description="You are on team #" + str(loginResponse["team"]) + " and you now have access to the respective channels. Please submit missions in the general chat of your team channel, or through a DM to me.", color=colors["green"])
-      await ctx.send(embed=embedVar)
+      embedVar = discord.Embed(title="Sent you a DM!", color=colors["purple"])
+      msg = await ctx.send(embed=embedVar)
+      await msg.delete()
+      embedVar = discord.Embed(title="Login successful, " + loginResponse["fullName"],
+                               description="You are on team #" + str(loginResponse[
+                                                                       "team"]) + " and you now have access to the respective channels. Please submit missions in the general chat of your team channel, or through a DM to me.",
+                               color=colors["green"])
+      await ctx.author.send(embed=embedVar)
   else:
     await ctx.send(embed=errorEmbed("Please enter a valid email and try again. Use the same email as you used to register."))
 
@@ -183,14 +210,24 @@ async def login(ctx, email, code):
 async def submit(ctx, mission, media_consent='Yes'):
   await sendSubmit(ctx, mission, media_consent, False)
 async def sendSubmit(ctx, mission, media_consent, DM):
+  print("Submission", mission, media_consent, DM)
+
   def check(message):
     if ctx.author.id == message.author.id:
       return True
     else:
       return False
-  if not getLogin(ctx):
-    await ctx.send(embed=errorEmbed("You cannot submit until you've logged in."))
-    return
+  try:
+    if not getLogin(ctx):
+      await ctx.send(embed=errorEmbed("You cannot submit until you've logged in."))
+      return
+  except AttributeError:
+    if await getTeam(ctx, DM) is None:
+      await ctx.send(embed=errorEmbed("You cannot submit until you've logged in."))
+      return
+  # if not getLogin(ctx) or getTeam(ctx, DM) is None:
+  #   await ctx.send(embed=errorEmbed("You cannot submit until you've logged in."))
+  #   return
   embedVar = discord.Embed(title="Please send your image/video via discord now. The bot is waiting for you...", description="Send any text message to cancel.", color=colors["yellow"])
   await sendMessage(ctx, embedVar, DM)
   try: 
@@ -241,6 +278,7 @@ async def sendSubmit(ctx, mission, media_consent, DM):
 async def submitlink(ctx, mission, link, media_consent='Yes'):
   await sendSubmitLink(ctx,mission,link, media_consent, False)
 async def sendSubmitLink(ctx,mission,link, media_consent, DM):
+  print("Submit link", mission, link, media_consent, DM)
   team = await getTeam(ctx,DM)
   if(team!=False):
     submitResponse = backend.submit(mission, team, getDiscordTag(ctx), ctx.author.id, link, media_consent)
@@ -270,12 +308,15 @@ async def status(ctx, mission):
   msg = await ctx.send(embed=embedVar)
   await msg.delete()
 async def sendStatus(ctx,mission,DM):
-  if mission <= 0:
+  print(mission, DM)
+  if int(mission) <= 0:
       await sendMessage(ctx, errorEmbed('Invalid Mission Number'), DM)
       return
+  print("Got past")
   team = await getTeam(ctx, DM)
   if(team!=False):
     statusResponse = backend.status(mission, team, ctx.author.id)
+    print(statusResponse)
     if 'errorMsg' in statusResponse:
       await sendMessage(ctx, errorEmbed(statusResponse['errorMsg']), DM)
       return
@@ -394,9 +435,11 @@ def createDescription(fields, newline=False):
   return outputString
 
 async def getTeam(ctx, DM=False):
+  print("Start")
   if DM:
     #if it's from a DM we need to look up the database
     lookupTeamResponse = backend.lookupTeam(ctx.author.id) #if false DM not logged in to user
+    print(lookupTeamResponse)
     if 'errorMsg' in lookupTeamResponse:
       await sendMessage(ctx, errorEmbed(lookupTeamResponse['errorMsg']), DM)
       return
@@ -424,4 +467,5 @@ async def sendMessage(ctx, embed, DM):
   else:
     await ctx.send(embed=embed)
 
-client.run(keys["clientToken"])
+
+client.run(keys[sys.argv[1]]["clientToken"])

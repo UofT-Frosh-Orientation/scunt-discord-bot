@@ -4,11 +4,12 @@ ROOT = 'https://scunt-2021.herokuapp.com'
 def loginUser(email, code, username, id):
   #login successful, generate team (based on discipline similar to how frosh groups are generated?)
   loginRequest = {
-    'email': email, 
+    'email': email,
     'code': code, 
     'discordUsername': username, 
     'id': id
   }
+  print(loginRequest)
   r = requests.post(ROOT + '/login/discord', data=loginRequest)
   response = r.json()
   print(response)
@@ -20,7 +21,7 @@ def loginUser(email, code, username, id):
     return {
       "fullName": response["name"], 
       "team": response["teamNumber"], 
-      "alreadyIn": response["discordSignedIn"], 
+      "alreadyIn": False,
       "pronoun": response["pronouns"],
       "type": response["type"]
     }
