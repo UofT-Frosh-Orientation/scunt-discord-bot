@@ -5,6 +5,7 @@
 * The following libraries need to be installed for the bot to function, via pip
   * ```pip install discord```
   * ```pip install -U discord-py-slash-command```
+  * ```pip install --upgrade Pillow```
 
 ### Creating the bot and credentials
 1. Head to the discord developer portal and create a new application
@@ -47,9 +48,6 @@
   * Users with the ```Logged In``` role should not have access to type messages in the ```#welcome``` channel
 
 ## Usage
-### Automatic functionality
-  * Status updates - DMs the user the status command if the status of a challenge they submitted changes. Usually updated the submitter with info on points rewarded and judge comments.
-  * Upload updates - DMs the user with information on the content they just submitted, as a confirmation
 
 ### Commands
   * ```/login <email>``` - Adds a user to the respective team roles within the server, sets the ```Logged In``` role, and sets nickname to preferred name and appends pronouns
@@ -64,3 +62,15 @@
   * Accesses the registration database to retrieve information on a user after login to the discord. Retrieves users name, pronouns, Scunt team, etc.
   * Submissions and status updates on challenges
   * Challenges get forwarded to the judges automatically 
+
+### Future Enhancements
+  * the bot can only send DMs to people who have shared server DMs setting enabled in their profile (is there a way to check if this is the case, and send an error message in the server instead of failing)
+  * don’t allow double submissions from your team (or give warning before an upload that your team has already done that challenge number)
+    * can send this message after the /submit command is run (before the bot waits for an upload)
+  * allow multiple bot submissions (when the user uploads more than one discord attachment in one message, only the first one is taken... take all of them)
+  * make media consent at login? and they can change it by running a command at any time (this avoids repetition every time someone wants to submit)
+  
+  * Implement automatic functionality
+#### Automatic functionality
+  * Status updates - DMs the user the status command if the status of a challenge they submitted changes. Usually updated the submitter with info on points rewarded and judge comments.
+  * Upload updates - DMs the user with information on the content they just submitted, as a confirmation
