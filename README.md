@@ -69,8 +69,7 @@
     * can send this message after the /submit command is run (before the bot waits for an upload)
   * allow multiple bot submissions (when the user uploads more than one discord attachment in one message, only the first one is taken... take all of them)
   * make media consent at login? and they can change it by running a command at any time (this avoids repetition every time someone wants to submit)
-  
-  * Implement automatic functionality
-#### Automatic functionality
+  * Implement automatic feedback functionality (below)
+#### Automatic feedback functionality
   * Status updates - DMs the user the status command if the status of a challenge they submitted changes. Usually updated the submitter with info on points rewarded and judge comments.
   * Upload updates - DMs the user with information on the content they just submitted, as a confirmation
