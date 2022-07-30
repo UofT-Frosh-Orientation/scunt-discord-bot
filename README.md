@@ -2,6 +2,7 @@
 ## Setup
 ### Dependencies
 * This discord bot uses python version 3
+* You can install `requirements.txt` or
 * The following libraries need to be installed for the bot to function, via pip
   * ```pip install discord```
   * ```pip install -U discord-py-slash-command```
@@ -51,12 +52,10 @@
 
 ### Commands
   * ```/login <email>``` - Adds a user to the respective team roles within the server, sets the ```Logged In``` role, and sets nickname to preferred name and appends pronouns
-  * ```/submit <number> <media-consent>``` - Submits via discord to the judges. The next message the user sends should be an attachment, and the bot will push this to the judges. If the user does not send another message within the timeout (30 seconds), an error message will be sent. User needs to reference the challenge number, and users info gets pushed along to judges as well (name, team, discord user etc.)
-  * ```/submitlink <number> <link> <media-consent>``` - Submits a challenge to the judges with a link (This link can be user submitted via Google Drive, Dropbox, etc.). User needs to reference the challenge number, and users info gets pushed along to judges as well (name, team, discord user etc.)
   * ```/status <number>``` - Retrieves and displays the status of a challenge. Can be submitted, not submitted, pending, or completed. When completed, judges comments, points earned etc. will return.
   * ```/help``` - DMs the user with commands the bot can do
   * ```/leaderboard``` - DMs the user with the current score of all the teams (in a nice generated image)
-  * ```/view``` - DMs the user with the list of challenges, or provides a link to the website/pdf (supplied in ```constants.json```)
+  * ```/missions``` - DMs the user with the list of challenges, or provides a link to the website/pdf (supplied in ```constants.json```)
 
 ### Backend functionality
   * Accesses the registration database to retrieve information on a user after login to the discord. Retrieves users name, pronouns, Scunt team, etc.
@@ -65,10 +64,6 @@
 
 ### Future Enhancements
   * the bot can only send DMs to people who have shared server DMs setting enabled in their profile (is there a way to check if this is the case, and send an error message in the server instead of failing)
-  * don’t allow double submissions from your team (or give warning before an upload that your team has already done that challenge number)
-    * can send this message after the /submit command is run (before the bot waits for an upload)
-  * allow multiple bot submissions (when the user uploads more than one discord attachment in one message, only the first one is taken... take all of them)
-  * make media consent at login? and they can change it by running a command at any time (this avoids repetition every time someone wants to submit)
   * Implement automatic feedback functionality (below)
 #### Automatic feedback functionality
   * Status updates - DMs the user the status command if the status of a challenge they submitted changes. Usually updated the submitter with info on points rewarded and judge comments.

@@ -8,59 +8,6 @@
 #DM when judge assigns points or comments or accepts
 #Error checking on frontend
 
-# Backend structure - these functions are not yet called by the frontend
-
-# /status <challenge>
-# View status of a challenge
-# def status(challenge, team)
-# challenge - int
-# team - int
-# return [
-#   {title:"Item description","description":value},
-#   {title:"Category","description":value},
-#   {title:"Points","description":value},
-#   {title:"Completed status","description":value},
-#   {title:"Points rewarded","description":value},
-#   {title:"Judges comments","description":value},
-# ]
-# Put value to False or "" if missing info for status command
-
-# /leaderboard
-# View the leaderboard and points of every team
-# def leaderboard()
-# return [100,200,300,400,500,600,700,800]
-# array of points - needs to correspond to team names listed in constants.json - teamRoles (chronological order)
-
-# /submitlink <challenge> <link> or /submit <challenge> (link via discord)
-# Submit a challenge to judges
-# def submit(challenge, team, discordTag, nickname, link)
-# challenge - int
-# team - int
-# discordTag - str (User#0000)
-# nickname - str
-# link - str
-# return True / False (if error)
-
-# /login <email> <code?>
-# Logs a user in, assigns nickname and team roles, store the discord tag in the database (in case we need to look up team name)
-# def login(email, code, discordUserID)
-# email - str
-# code - int
-# discordUserID - int
-# if login successful:
-# return {
-#   "fullName" : value,
-#   "team" : value,       #int or str shouldn't matter
-#   "pronoun" : value
-# }
-# if error:
-# return False
-
-# def lookUpTeam(discordUserID)
-# discordUserID - int
-# return team  #int or str shouldn't matter
-# return False if user hasn't logged in (i.e. they haven't logged in)
-
 import discord
 import sys
 import json
@@ -104,20 +51,7 @@ async def on_message(msg):
         await sendLeaderboard(msg)
       elif command[0]=="status" or command[0]=="/status":
         await sendStatus(msg, command[1], True)
-      elif command[0]=="submit" or command[0]=="/submit":
-        await sendSubmit(msg, command[1], command[2], True)
-        options = ["Yes", "No"]
-        if not command[2] in options:
-          await msg.author.send(embed=errorEmbed(
-            "Please make sure media consent is [Yes] or [No]"))
-      elif command[0]=="submitlink" or command[0]=="/submitlink":
-        await sendSubmitLink(msg, command[1], command[2], command[3], True)
-        options = ["Yes", "No"]
-        if not command[3] in options:
-          await msg.author.send(embed=errorEmbed(
-            "Please make sure media consent is [Yes] or [No]"))
   except:
-    print(sys.exc_info[0])
     await msg.author.send(embed=errorEmbed("There was an error with your command. You most likely forgot a parameter.\nType /help for more information."))
 
 @client.event
@@ -133,6 +67,14 @@ async def on_member_join(member):
     embedVar.add_field(name="Please use the /login <email> <code>", value="(same email as registration)", inline=False)
     await channel.send(embed=embedVar)
 
+# ---------------------------------------------------------------------------------
+# Test commands listed below. Use it to test basic functionality of the bot
+# ---------------------------------------------------------------------------------
+# @slash.slash(name="hello", guild_ids=guildIDs, description="Used to test your bot.", options = [])
+# async def hello(ctx):
+#   embedVar = discord.Embed(title="Hello " + ctx.author.name, color=colors["purple"])
+#   await ctx.send(embed=embedVar)
+#   return
 
 @slash.slash(name="login", guild_ids=guildIDs, description="Used to get access to your Scunt team. Use the same email as registration.", options = [
   create_option(
@@ -152,8 +94,7 @@ async def on_member_join(member):
 #todo - backend can send fullName field or preferred name if not empty
 async def login(ctx, email, code):
   if getLogin(ctx):
-    team = await getTeam(ctx)
-    await ctx.send(embed=errorEmbed("You have already logged in and are on team " + team))
+    await ctx.send(embed=errorEmbed("You have already logged in to Discord."))
     return
   if "@" in email:
     loginResponse = backend.loginUser(email, code, getDiscordTag(ctx), ctx.author.id)
@@ -186,114 +127,11 @@ async def login(ctx, email, code):
       await msg.delete()
       embedVar = discord.Embed(title="Login successful, " + loginResponse["fullName"],
                                description="You are on team #" + str(loginResponse[
-                                                                       "team"]) + " and you now have access to the respective channels. Please submit missions in the general chat of your team channel, or through a DM to me.",
+                                                                       "team"]) + " and you now have access to the respective channels.",
                                color=colors["green"])
       await ctx.author.send(embed=embedVar)
   else:
     await ctx.send(embed=errorEmbed("Please enter a valid email and try again. Use the same email as you used to register."))
-
-@slash.slash(name="submit", guild_ids=guildIDs, description="Submit a mission via discord attachments.", options = [
-  create_option(
-    name="mission",
-    description="The Mission Number",
-    option_type=SlashCommandOptionType.INTEGER,
-    required=True
-  ),
-  create_option(
-    name="media_consent",
-    description="Do you consent to have this submission judged on the live stream?",
-    option_type=SlashCommandOptionType.STRING,
-    required=False,
-    choices=["Yes","No"]
-  )
-])
-async def submit(ctx, mission, media_consent='Yes'):
-  await sendSubmit(ctx, mission, media_consent, False)
-async def sendSubmit(ctx, mission, media_consent, DM):
-  print("Submission", mission, media_consent, DM)
-
-  def check(message):
-    if ctx.author.id == message.author.id:
-      return True
-    else:
-      return False
-  try:
-    if not getLogin(ctx):
-      await ctx.send(embed=errorEmbed("You cannot submit until you've logged in."))
-      return
-  except AttributeError:
-    if await getTeam(ctx, DM) is None:
-      await ctx.send(embed=errorEmbed("You cannot submit until you've logged in."))
-      return
-  # if not getLogin(ctx) or getTeam(ctx, DM) is None:
-  #   await ctx.send(embed=errorEmbed("You cannot submit until you've logged in."))
-  #   return
-  embedVar = discord.Embed(title="Please send your image/video via discord now. The bot is waiting for you...", description="Send any text message to cancel.", color=colors["yellow"])
-  await sendMessage(ctx, embedVar, DM)
-  try: 
-    msg = await client.wait_for('message', check=check, timeout=60)
-    if msg.attachments:
-      team = await getTeam(ctx, DM)
-      if(team!=False):
-        submitResponse = backend.submit(mission, team, getDiscordTag(ctx), ctx.author.id, msg.attachments[0].url, media_consent)
-        if 'errorMsg' in submitResponse:
-          await sendMessage(ctx, errorEmbed(submitResponse['errorMsg']), DM)
-          return
-        embedVar = discord.Embed(title="Sent to the judges!", description=createDescription([
-          {"title": "Challenge", "description":mission},
-          {"title": "Submission", "description":msg.attachments[0].url},
-          {"title": "Team", "description":team},
-        ]), color=colors["green"])
-        await sendMessage(ctx, embedVar, DM)
-        await msg.add_reaction("✅")
-      else:
-        await sendMessage(ctx, errorEmbed("You are not on a team! Please use /login"), DM)
-        await msg.add_reaction("🛑")
-    else:
-      await sendMessage(ctx, errorEmbed("Cancelled. Please upload an attachment via discord next time or use the /submitlink command."), DM)
-  except:
-    await sendMessage(ctx, errorEmbed("Timed out, please run the command and try again."), DM)
-
-@slash.slash(name="submitlink", guild_ids=guildIDs, description="Submit a mission via discord attachments.", options = [
-  create_option(
-    name="mission",
-    description="The mission number",
-    option_type=SlashCommandOptionType.INTEGER,
-    required=True
-  ),
-  create_option(
-    name="link",
-    description="Link to the mission submission",
-    option_type=SlashCommandOptionType.STRING,
-    required=True
-  ),
-  create_option(
-    name="media_consent",
-    description="Do you consent to have this submission judged on the live stream?",
-    option_type=SlashCommandOptionType.STRING,
-    required=False,
-    choices=["Yes","No"]
-  )
-])
-async def submitlink(ctx, mission, link, media_consent='Yes'):
-  await sendSubmitLink(ctx,mission,link, media_consent, False)
-async def sendSubmitLink(ctx,mission,link, media_consent, DM):
-  print("Submit link", mission, link, media_consent, DM)
-  team = await getTeam(ctx,DM)
-  if(team!=False):
-    submitResponse = backend.submit(mission, team, getDiscordTag(ctx), ctx.author.id, link, media_consent)
-    if 'errorMsg' in submitResponse:
-      await sendMessage(ctx, errorEmbed(submitResponse['errorMsg']), DM)
-      return
-    embedVar = discord.Embed(title="Sent to the judges!", description=createDescription([
-      {"title": "Mission Number", "description":mission},
-      {"title": "Submission", "description":link},
-      {"title": "", "description":"*Please ensure that anyone with this link can view the file!*"},
-      {"title": "Team", "description":team},
-    ]), color=colors["green"])
-    await sendMessage(ctx, embedVar, DM)
-  else:
-    await sendMessage(ctx, errorEmbed("You are not on a team! Please use /login"), DM)
 
 @slash.slash(name="status", guild_ids=guildIDs, description="View the status of a mission", options = [
   create_option(
@@ -308,12 +146,13 @@ async def status(ctx, mission):
   msg = await ctx.send(embed=embedVar)
   await msg.delete()
 async def sendStatus(ctx,mission,DM):
-  print(mission, DM)
+  if(DM):
+    await sendMessage(ctx, errorEmbed('Please use this command on the Scunt Discord server only.'), DM)
+    return
   if int(mission) <= 0:
-      await sendMessage(ctx, errorEmbed('Invalid Mission Number'), DM)
-      return
-  print("Got past")
-  team = await getTeam(ctx, DM)
+    await sendMessage(ctx, errorEmbed('Invalid Mission Number'), DM)
+    return
+  team = await getTeam(ctx)
   if(team!=False):
     statusResponse = backend.status(mission, team, ctx.author.id)
     print(statusResponse)
@@ -342,13 +181,13 @@ async def sendHelp(ctx):
     embedVar.add_field(name=command["title"],value=command["description"],inline=False)
   await ctx.author.send(embed=embedVar)
 
-@slash.slash(name="view", guild_ids=guildIDs, description="See all the missions available.")
-async def view(ctx):
-  await sendView(ctx)
+@slash.slash(name="missions", guild_ids=guildIDs, description="See all the missions available.")
+async def missions(ctx):
+  await sendMissions(ctx)
   embedVar = discord.Embed(title="Sent you a DM!", color=colors["purple"])
   msg = await ctx.send(embed=embedVar)
   await msg.delete()
-async def sendView(ctx):
+async def sendMissions(ctx):
   embedVar = discord.Embed(title="Scunt " + constants["scuntYear"] + " mission list", description=constants["challengesLink"],color=colors["purple"])
   await ctx.author.send(embed=embedVar)
 
@@ -359,12 +198,17 @@ async def leaderboard(ctx):
   msg = await ctx.send(embed=embedVar)
   await msg.delete()
 async def sendLeaderboard(ctx):
-  #teamPoints = [150,100,200,300,400,100,200,300,]
+  # For testing:
+  # teamPoints = [150,100,200,300,400,100,200,300,100,100,200,500]
   leaderboardResponse = backend.leaderboard()
   if 'errorMsg' in leaderboardResponse:
     await sendMessage(ctx, errorEmbed(leaderboardResponse['errorMsg']), True)
     return
   teamPoints = leaderboardResponse["teamScores"]
+  if(len(constants["teamRoles"])!=len(teamPoints)):
+    print("There was a mismatch between teams and the length of the leaderboard!")
+    return
+
   IMAGE_WIDTH = 800
   heightTeam = 50
   IMAGE_HEIGHT = len(constants["teamRoles"]) * heightTeam + 90
@@ -377,7 +221,7 @@ async def sendLeaderboard(ctx):
   draw.rectangle([0, 0, IMAGE_WIDTH, IMAGE_HEIGHT], fill=colors["white"])
 
   # draw title
-  font = ImageFont.truetype('arialRound.ttf', 45)
+  font = ImageFont.truetype('ComicSansMS3.ttf', 45)
   text = "Scunt " + constants["scuntYear"] + " Leaderboard"
   textWidth, textHeight = draw.textsize(text, font=font)
   x = (IMAGE_WIDTH - textWidth)//2
@@ -394,7 +238,7 @@ async def sendLeaderboard(ctx):
   if range == 0:
     range = 100
   for team in constants["teamRoles"]:
-    font = ImageFont.truetype('arialRound.ttf', 30)
+    font = ImageFont.truetype('ComicSansMS3.ttf', 26)
     textWidth, textHeight = draw.textsize(team, font=font)
     textWidth = 80
     offset = offset + heightTeam
@@ -402,9 +246,9 @@ async def sendLeaderboard(ctx):
     barPaddingLeft = 30
     teamPointsPercent = (teamPoints[teamNumber]-minValue) / range
     draw.rounded_rectangle((textWidth + textPaddingLeft + barPaddingLeft, offset + 3, textWidth + textPaddingLeft + barPaddingLeft + (teamPointsPercent*maxBarWidth+minBarWidth), offset + textHeight), fill="purple", radius=7)
-    draw.text((textPaddingLeft, offset), team, fill=(50, 0, 120), font=font)
+    draw.text((textPaddingLeft, offset - 2), team, fill=(50, 0, 120), font=font)
 
-    font = ImageFont.truetype('arialRound.ttf', 20)
+    font = ImageFont.truetype('ComicSansMS3.ttf', 20)
     textWidthScore, textHeightScore = draw.textsize(str(teamPoints[teamNumber]), font=font)
     draw.text((textWidth + textPaddingLeft + barPaddingLeft + (teamPointsPercent*maxBarWidth+minBarWidth+10), offset+3), str(teamPoints[teamNumber]), fill=(50, 0, 120), font=font)
     teamNumber=teamNumber+1
@@ -434,22 +278,11 @@ def createDescription(fields, newline=False):
     outputString+="\n"
   return outputString
 
-async def getTeam(ctx, DM=False):
-  print("Start")
-  if DM:
-    #if it's from a DM we need to look up the database
-    lookupTeamResponse = backend.lookupTeam(ctx.author.id) #if false DM not logged in to user
-    print(lookupTeamResponse)
-    if 'errorMsg' in lookupTeamResponse:
-      await sendMessage(ctx, errorEmbed(lookupTeamResponse['errorMsg']), DM)
-      return
-    else:
-      return lookupTeamResponse["teamNumber"]
-  else:
-    for role in ctx.author.roles:
-      if("team" in role.name.lower()):
-        return role.name.lower().replace("team","").replace(" ","")
-    return False
+async def getTeam(ctx):
+  for role in ctx.author.roles:
+    if("team" in role.name.lower()):
+      return role.name.lower().replace("team","").replace(" ","")
+  return False
 
 def getLogin(ctx):
   for role in ctx.author.roles:
@@ -468,4 +301,4 @@ async def sendMessage(ctx, embed, DM):
     await ctx.send(embed=embed)
 
 
-client.run(keys[sys.argv[1]]["clientToken"])
+client.run(keys["clientToken"])

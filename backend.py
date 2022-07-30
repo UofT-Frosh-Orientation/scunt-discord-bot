@@ -1,13 +1,11 @@
 import requests
 
 ROOT = 'https://scunt-2021.herokuapp.com'
-def loginUser(email, code, username, id):
+def loginUser(email, code):
   #login successful, generate team (based on discipline similar to how frosh groups are generated?)
   loginRequest = {
     'email': email,
     'code': code, 
-    'discordUsername': username, 
-    'id': id
   }
   print(loginRequest)
   r = requests.post(ROOT + '/login/discord', data=loginRequest)
@@ -25,29 +23,6 @@ def loginUser(email, code, username, id):
       "pronoun": response["pronouns"],
       "type": response["type"]
     }
-
-def submit(submission, team, discordTag, discordId, url, mediaConsent):
-  #submission - number, name - the persons name submitting (discord nickname), discordUser - username string of person submitting, team - number
-  #return the status of the submission (True if success, False if error), takes a string
-  #will be a google drive link or a discord link linking to an attachment
-  #Sends link to the judges
-  if mediaConsent == 'Yes':
-    mediaConsentStr = 'true'
-  else:
-    mediaConsentStr = 'false'
-  submitRequest = {
-    'discordUsername': discordTag,
-    'missionNumber': submission, 
-    'teamNumber': team, 
-    'submissionLink': url,
-    "discordId": discordId,
-    'isMediaConsent': mediaConsentStr
-  }
-  r = requests.post(ROOT + '/post/submission', data=submitRequest)
-  response = r.json()
-  print(response)
-  return response
-
 
 def status(submission, team, discordId):
   #submission - number
@@ -69,12 +44,41 @@ def leaderboard():
   response = r.json()
   return response
 
-def lookupTeam(userId):
-  getTeamParams = {
-    'discordId': userId
-  }
-  r = requests.get(ROOT + '/get/discordUser/team', params=getTeamParams)
-  response = r.json()
-  return response
 
+# Backend structure - these functions are not yet called by the frontend
 
+# /status <challenge>
+# View status of a challenge
+# def status(challenge, team)
+# challenge - int
+# team - int
+# return [
+#   {title:"Item description","description":value},
+#   {title:"Category","description":value},
+#   {title:"Points","description":value},
+#   {title:"Completed status","description":value},
+#   {title:"Points rewarded","description":value},
+#   {title:"Judges comments","description":value},
+# ]
+# Put value to False or "" if missing info for status command
+
+# /leaderboard
+# View the leaderboard and points of every team
+# def leaderboard()
+# return [100,200,300,400,500,600,700,800]
+# array of points - needs to correspond to team names listed in constants.json - teamRoles (chronological order)
+
+# /login <email> <code?>
+# Logs a user in, assigns nickname and team roles, store the discord tag in the database (in case we need to look up team name)
+# def login(email, code, discordUserID)
+# email - str
+# code - int
+# discordUserID - int
+# if login successful:
+# return {
+#   "fullName" : value,
+#   "team" : value,       #int or str shouldn't matter
+#   "pronoun" : value
+# }
+# if error:
+# return False

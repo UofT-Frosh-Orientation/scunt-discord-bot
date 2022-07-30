@@ -1,14 +1,12 @@
 {
   "teamRoles": ["Team 1","Team 2","Team 3","Team 4","Team 5","Team 6","Team 7","Team 8", "Team 9", "Team 10", "Team 11", "Team 12"],
   "loggedInRole" : "Logged In",
-  "welcomeChannel" : "welcome",
+  "welcomeChannel" : "reception",
   "commands": [
     {"title":"/help", "description":"DMs the user with available commands"},
-    {"title":"/view", "description":"DMs the user with the list (or a link) of challenges"},
-    {"title":"/submit <challenge> <media consent (Yes/No)>", "description":"Submit the challenge number to the judges via discord. The next attachment message you send will be submitted to the judges."},
-    {"title":"/submitlink <challenge> <link> <media consent (Yes/No)>", "description":"Submit the challenge number to the judges with the given link."},
-    {"title":"/status <challenge>", "description":"DMs the user the status of a certain challenge number"}
+    {"title":"/missions", "description":"DMs the user with the list (or a link) of challenges"},
+    {"title":"/status <challenge>", "description":"This only works on the server. DMs the user the status of a certain challenge number"}
   ],
-  "challengesLink" : "https://www.scunt.skule.ca/",
-  "scuntYear" : "2T1"
+  "challengesLink" : "https://www.orientation.skule.ca/scunt-missions",
+  "scuntYear" : "2T2"
 }
