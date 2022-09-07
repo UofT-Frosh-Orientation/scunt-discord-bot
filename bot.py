@@ -124,21 +124,17 @@ async def login(ctx, email, code):
             await ctx.author.send(embed=errorEmbed("You have already logged in."))
             return
         try:
-            print("Got here")
-            print(ctx.author.guild.roles)
-            print(constants["teamRoles"][int(loginResponse["team"]) - 1])
             await ctx.author.add_roles(
                 discord.utils.get(ctx.author.guild.roles, name=constants["teamRoles"][int(loginResponse["team"]) - 1]))
             await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=constants["loggedInRole"]))
             if loginResponse["type"] == 'leadur':
                 await ctx.author.add_roles(discord.utils.get(ctx.author.guild.roles, name=f"Team {loginResponse['team']} Leedur"))
-            # await ctx.author.edit(nick=(loginResponse["fullName"] + " (" + loginResponse["pronoun"] + ")")[0:31])
+            await ctx.author.edit(nick=(loginResponse["fullName"] + " (" + loginResponse["pronoun"] + ")")[0:31])
         except Exception as e:
             print("error:")
             print(e)
             await ctx.send(embed=errorEmbed(str(e)))
         else:
-            print("Got here 2")
             embedVar = discord.Embed(title="Sent you a DM!", color=colors["purple"])
             print(embedVar)
             msg = await ctx.send(embed=embedVar)
