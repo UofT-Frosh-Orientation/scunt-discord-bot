@@ -1,6 +1,6 @@
 import requests
 
-ROOT = 'https://scunt-2021.herokuapp.com'
+ROOT = 'https://scunt.ngrok.io/scunt'
 def loginUser(email, code):
   #login successful, generate team (based on discipline similar to how frosh groups are generated?)
   loginRequest = {
@@ -8,12 +8,13 @@ def loginUser(email, code):
     'code': code, 
   }
   print(loginRequest)
-  r = requests.post(ROOT + '/login/discord', data=loginRequest)
+  r = requests.post(ROOT + '/login/discord', json=loginRequest)
+  print(r)
   response = r.json()
   print(response)
-  if response["status"] != 200:
+  if r.status_code != 200:
     return {
-      "errorMsg": response["errorMsg"]
+      "errorMsg": response["errorMessage"]
     }
   else:
     return {
