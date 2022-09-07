@@ -1,6 +1,6 @@
 import requests
 
-ROOT = 'https://scunt.ngrok.io/scunt'
+ROOT = 'https://api.orientation.skule.ca'
 def loginUser(email, code):
   #login successful, generate team (based on discipline similar to how frosh groups are generated?)
   loginRequest = {
