@@ -1,6 +1,6 @@
 import requests
 
-ROOT = 'https://api.orientation.skule.ca'
+ROOT = 'https://api.orientation.skule.ca/scunt'
 def loginUser(email, code):
   #login successful, generate team (based on discipline similar to how frosh groups are generated?)
   loginRequest = {
@@ -9,9 +9,8 @@ def loginUser(email, code):
   }
   print(loginRequest)
   r = requests.post(ROOT + '/login/discord', json=loginRequest)
-  print(r)
+  print(r.content)
   response = r.json()
-  print(response)
   if r.status_code != 200:
     return {
       "errorMsg": response["errorMessage"]
