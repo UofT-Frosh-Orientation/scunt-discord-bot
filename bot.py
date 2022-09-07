@@ -64,13 +64,12 @@ async def on_ready():
 
 @client.event
 async def on_member_join(member):
-    if sys.argv[1] == 1:
-        channel = discord.utils.get(member.guild.channels, name=constants["welcomeChannel"])
-        embedVar = discord.Embed(title="🎉 Welcome to the Scunt Discord " + member.display_name + "!", description="",
-                                 color=colors["purple"])
-        embedVar.add_field(name="Please use the /login <email> <code>", value="(same email as registration)",
-                           inline=False)
-        await channel.send(embed=embedVar)
+    channel = discord.utils.get(member.guild.channels, name=constants["welcomeChannel"])
+    embedVar = discord.Embed(title="🎉 Welcome to the Scunt Discord " + member.display_name + "!", description="",
+                             color=colors["purple"])
+    embedVar.add_field(name="Please use the /login <email> <code>", value="(same email as registration)",
+                       inline=False)
+    await channel.send(embed=embedVar)
 
 
 # ---------------------------------------------------------------------------------
